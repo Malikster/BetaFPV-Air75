@@ -23,5 +23,6 @@ Recomandare: lasa `Throttle Expo` in Betaflight la `0`, sau foarte mic, ca sa nu
 
 ## THRHOV Expo Simulator
 
-Pagina live este aici: [https://malikster.github.io/BetaFPV-Air75/](https://malikster.github.io/BetaFPV-Air75/).
+Pagina live cu instructiuni de instalare este aici: [https://malikster.github.io/BetaFPV-Air75/](https://malikster.github.io/BetaFPV-Air75/).
 
+Simulatorul curbei throttle/expo este aici: [https://malikster.github.io/BetaFPV-Air75/grafic.html](https://malikster.github.io/BetaFPV-Air75/grafic.html).
