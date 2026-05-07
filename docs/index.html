@@ -195,8 +195,8 @@
           <li>Copiaza <code>SCRIPTS/MIXES/THRHOV.lua</code> in folderul <code>/SCRIPTS/MIXES/</code> de pe SD card.</li>
           <li>Copiaza <code>SCRIPTS/TELEMETRY/THREXP.lua</code> in folderul <code>/SCRIPTS/TELEMETRY/</code> de pe SD card.</li>
           <li>Reporneste radio-ul sau foloseste functia de reload scripts daca ai modificat fisierele cu radio-ul pornit.</li>
-          <li>In modelul Air75, adauga Mixes Script-ul <code>THRHOV</code> si seteaza inputurile: <code>Thr</code>, <code>S1</code>, <code>Arm</code>.</li>
-          <li>Foloseste outputul <code>ThrOut</code> ca sursa pentru canalul de throttle catre flight controller.</li>
+          <li>In modelul Air75, deschide pagina <code>Mixes Scripts</code>, alege un slot liber si selecteaza scriptul <code>THRHOV</code>. La inputuri seteaza <code>Thr</code> pe stick-ul de throttle, <code>S1</code> pe potentiometrul/sliderul folosit pentru hover-point si <code>Arm</code> pe switch-ul sau canalul care indica armarea. Verifica inainte de armare ca <code>S1</code> este aproape de pozitia ultimului hover memorat, altfel scriptul tine throttle cut.</li>
+          <li>In pagina <code>Mixes</code>, mergi la canalul de throttle trimis catre flight controller, de obicei <code>CH3</code> sau canalul folosit in modelul tau pentru throttle. Seteaza sursa mixului la outputul scriptului <code>ThrOut</code>, pastreaza weight la <code>100</code> si evita sa mai adaugi alta curba/expo pe acelasi canal. La final, verifica in channel monitor ca stick jos inseamna throttle minim, stick centru sta in jurul valorii Hover/X, iar stick sus se opreste la limita Max setata.</li>
           <li>In <code>Display/Screens</code>, adauga un ecran de tip <code>Script</code> si selecteaza <code>THREXP</code>.</li>
         </ol>
 
