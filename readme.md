@@ -25,6 +25,3 @@ Recomandare: lasa `Throttle Expo` in Betaflight la `0`, sau foarte mic, ca sa nu
 
 Pagina live este aici: [https://malikster.github.io/BetaFPV-Air75/](https://malikster.github.io/BetaFPV-Air75/).
 
-Pagina pentru simularea curbei throttle/expo este in [`docs/index.html`](docs/index.html).
-
-Poate fi publicata cu GitHub Pages din `Settings -> Pages -> Deploy from branch -> docs folder`.
