@@ -6,8 +6,17 @@ local X_MIN = 0.20
 local X_MAX = 0.80
 local X_RANGE = X_MAX - X_MIN
 
-local GV_EXPO = 0 -- GV1, EdgeTX Lua indexes from 0.
-local EXPO_MAX = 0.80
+local GV_EXPO_DOWN = 0 -- GV1, EdgeTX Lua indexes from 0.
+local GV_EXPO_UP = 1 -- GV2
+local GV_UP_SCALE = 2 -- GV3
+local GV_MAX = 3 -- GV4
+
+local EXPO_MIN = 0.00
+local EXPO_MAX = 0.95
+local SCALE_MIN = 0.00
+local SCALE_MAX = 1.00
+local MAX_MIN = 0.30
+local MAX_MAX = 1.00
 
 local S1_TOLERANCE = 164 -- About 8% of the full -1024..+1024 range.
 local ARM_THRESHOLD = 0
@@ -57,10 +66,24 @@ local function getCurrentFlightMode()
   return fm or 0
 end
 
-local function getExpo()
-  local gv = model.getGlobalVariable(GV_EXPO, getCurrentFlightMode())
+local function rawToValue(raw, minValue, maxValue)
+  local gv = clamp(raw or EDGE_MIN, EDGE_MIN, EDGE_MAX)
+  return minValue + ((gv - EDGE_MIN) / EDGE_SPAN) * (maxValue - minValue)
+end
+
+local function getSetting(gvIndex, minValue, maxValue)
+  local gv = model.getGlobalVariable(gvIndex, getCurrentFlightMode())
   gv = clamp(gv or EDGE_MIN, EDGE_MIN, EDGE_MAX)
-  return ((gv - EDGE_MIN) / EDGE_SPAN) * EXPO_MAX
+  return rawToValue(gv, minValue, maxValue)
+end
+
+local function getThrottleSettings()
+  return {
+    expoDown = getSetting(GV_EXPO_DOWN, EXPO_MIN, EXPO_MAX),
+    expoUp = getSetting(GV_EXPO_UP, EXPO_MIN, EXPO_MAX),
+    upScale = getSetting(GV_UP_SCALE, SCALE_MIN, SCALE_MAX),
+    maxPct = getSetting(GV_MAX, MAX_MIN, MAX_MAX),
+  }
 end
 
 local function xFromS1(s1)
@@ -98,16 +121,19 @@ local function expoCurve(u, expo)
   return (1 - boundedExpo) * boundedU + boundedExpo * boundedU * boundedU * boundedU
 end
 
-local function throttleToOutput(thr, x, expo)
+local function throttleToOutput(thr, x, settings)
   local u = clamp(thr or EDGE_MIN, EDGE_MIN, EDGE_MAX) / EDGE_MAX
-  local shaped = clamp(expoCurve(u, expo), -1, 1)
   local hover = clamp(x or xLocked, X_MIN, X_MAX)
+  local maxPct = clamp(settings.maxPct or MAX_MAX, hover, MAX_MAX)
+  local shaped
   local pct
 
-  if shaped < 0 then
+  if u < 0 then
+    shaped = clamp(expoCurve(u, settings.expoDown), -1, 0)
     pct = hover * (shaped + 1)
   else
-    pct = hover + (1 - hover) * shaped
+    shaped = clamp(expoCurve(u, settings.expoUp) * clamp(settings.upScale, SCALE_MIN, SCALE_MAX), 0, 1)
+    pct = hover + (maxPct - hover) * shaped
   end
 
   return clamp(round(pct * EDGE_SPAN + EDGE_MIN), EDGE_MIN, EDGE_MAX)
@@ -127,7 +153,7 @@ local function run(thr, s1, arm)
   end
 
   wasArmed = armed
-  return throttleToOutput(thr, xLocked, getExpo())
+  return throttleToOutput(thr, xLocked, getThrottleSettings())
 end
 
 return {

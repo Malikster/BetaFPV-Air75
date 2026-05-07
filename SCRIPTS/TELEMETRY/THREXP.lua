@@ -1,10 +1,21 @@
-local GV_EXPO = 0 -- GV1, EdgeTX Lua indexes from 0.
+local GV_EXPO_DOWN = 0 -- GV1, EdgeTX Lua indexes from 0.
+local GV_EXPO_UP = 1 -- GV2
+local GV_UP_SCALE = 2 -- GV3
+local GV_MAX = 3 -- GV4
+
 local EDGE_MIN = -1024
 local EDGE_MAX = 1024
 local EDGE_SPAN = 2048
-local EXPO_MIN = 0.00
-local EXPO_MAX = 0.80
-local EXPO_STEP = 0.01
+local VALUE_STEP = 0.01
+
+local selected = 1
+
+local fields = {
+  { label = "Expo Down", gv = GV_EXPO_DOWN, min = 0.00, max = 0.95 },
+  { label = "Expo Up", gv = GV_EXPO_UP, min = 0.00, max = 0.95 },
+  { label = "Up Scale", gv = GV_UP_SCALE, min = 0.00, max = 1.00 },
+  { label = "Max", gv = GV_MAX, min = 0.30, max = 1.00 },
+}
 
 local function clamp(value, minValue, maxValue)
   if value == nil then
@@ -31,22 +42,22 @@ local function currentFlightMode()
   return fm or 0
 end
 
-local function rawToExpo(raw)
+local function rawToValue(raw, minValue, maxValue)
   local gv = clamp(raw or EDGE_MIN, EDGE_MIN, EDGE_MAX)
-  return ((gv - EDGE_MIN) / EDGE_SPAN) * EXPO_MAX
+  return minValue + ((gv - EDGE_MIN) / EDGE_SPAN) * (maxValue - minValue)
 end
 
-local function expoToRaw(expo)
-  local value = clamp(expo or EXPO_MIN, EXPO_MIN, EXPO_MAX)
-  return clamp(round((value / EXPO_MAX) * EDGE_SPAN + EDGE_MIN), EDGE_MIN, EDGE_MAX)
+local function valueToRaw(value, minValue, maxValue)
+  local bounded = clamp(value or minValue, minValue, maxValue)
+  return clamp(round(((bounded - minValue) / (maxValue - minValue)) * EDGE_SPAN + EDGE_MIN), EDGE_MIN, EDGE_MAX)
 end
 
-local function getExpo()
-  return rawToExpo(model.getGlobalVariable(GV_EXPO, currentFlightMode()))
+local function getValue(field)
+  return rawToValue(model.getGlobalVariable(field.gv, currentFlightMode()), field.min, field.max)
 end
 
-local function setExpo(expo)
-  model.setGlobalVariable(GV_EXPO, currentFlightMode(), expoToRaw(expo))
+local function setValue(field, value)
+  model.setGlobalVariable(field.gv, currentFlightMode(), valueToRaw(value, field.min, field.max))
 end
 
 local function isIncEvent(event)
@@ -65,38 +76,49 @@ local function isDecEvent(event)
     or event == EVT_ROT_LEFT
 end
 
-local function drawScreen(expo)
+local function isEnterEvent(event)
+  return event == EVT_ENTER_BREAK
+    or event == EVT_VIRTUAL_ENTER
+    or event == EVT_ROT_BREAK
+end
+
+local function drawRow(y, field, value, isSelected)
+  local flags = isSelected and INVERS or 0
+  if isSelected then
+    lcd.drawFilledRectangle(0, y - 1, LCD_W, 9, SOLID)
+  end
+  lcd.drawText(2, y, field.label, flags)
+  lcd.drawText(LCD_W - 34, y, string.format("%.2f", value), flags)
+end
+
+local function drawScreen()
   lcd.clear()
 
-  lcd.drawText(2, 1, "THRHOV EXPO", MIDSIZE)
+  lcd.drawText(2, 1, "THRHOV SETTINGS", 0)
   lcd.drawLine(0, 14, LCD_W, 14, SOLID, FORCE)
 
-  lcd.drawText(2, 23, "Expo", 0)
-  lcd.drawText(42, 20, string.format("%.2f", expo), DBLSIZE)
-
-  local barX = 2
-  local barY = LCD_H - 14
-  local barW = LCD_W - 4
-  local fillW = math.floor((expo / EXPO_MAX) * barW)
-
-  lcd.drawRectangle(barX, barY, barW, 8)
-  if fillW > 1 then
-    lcd.drawFilledRectangle(barX + 1, barY + 1, fillW - 1, 6)
+  for index, field in ipairs(fields) do
+    drawRow(17 + (index - 1) * 10, field, getValue(field), index == selected)
   end
+
+  lcd.drawText(2, LCD_H - 8, "ENTER=next +/-=edit", SMLSIZE)
 end
 
 local function run(event)
-  local expo = getExpo()
+  local field = fields[selected]
 
-  if isIncEvent(event) then
-    expo = clamp(expo + EXPO_STEP, EXPO_MIN, EXPO_MAX)
-    setExpo(expo)
+  if isEnterEvent(event) then
+    selected = selected + 1
+    if selected > #fields then
+      selected = 1
+    end
+  elseif isIncEvent(event) then
+    setValue(field, clamp(getValue(field) + VALUE_STEP, field.min, field.max))
   elseif isDecEvent(event) then
-    expo = clamp(expo - EXPO_STEP, EXPO_MIN, EXPO_MAX)
-    setExpo(expo)
+    setValue(field, clamp(getValue(field) - VALUE_STEP, field.min, field.max))
   end
 
-  drawScreen(getExpo())
+  drawScreen()
 end
 
 return {
