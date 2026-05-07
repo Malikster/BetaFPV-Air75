@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>THRHOV Expo Simulator</title>
+  <style>
+    :root {
+      --bg: #f5f1e7;
+      --paper: #fffaf0;
+      --paper-strong: #fffdf7;
+      --ink: #18231f;
+      --muted: #59645f;
+      --line: #d8d0c0;
+      --accent: #0b7f68;
+      --accent-dark: #064f43;
+      --hover: #d36f21;
+      --max: #16865f;
+      --danger: #a8432b;
+      --grid: rgba(24, 35, 31, 0.12);
+      --shadow: 0 20px 50px rgba(30, 37, 32, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(125deg, rgba(11, 127, 104, 0.16), transparent 38%),
+        radial-gradient(circle at top right, rgba(211, 111, 33, 0.14), transparent 32%),
+        var(--bg);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 34px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(2rem, 5vw, 4.25rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 640px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 1rem;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 240, 0.82);
+      color: var(--accent-dark);
+      padding: 9px 11px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      box-shadow: 0 8px 26px rgba(30, 37, 32, 0.08);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 370px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 240, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .controls,
+    .chart-panel,
+    .instructions {
+      padding: 16px;
+    }
+
+    .presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: 1px solid var(--accent-dark);
+      background: var(--accent);
+      color: white;
+      padding: 10px 9px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: var(--accent-dark);
+      outline: 2px solid rgba(11, 127, 104, 0.26);
+      outline-offset: 2px;
+    }
+
+    .control {
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .control:last-child {
+      border-bottom: 0;
+    }
+
+    .control-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      font-size: 0.96rem;
+      font-weight: 800;
+    }
+
+    output {
+      color: var(--accent-dark);
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .limits {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.55;
+      min-height: 315px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        var(--paper-strong);
+      background-size: 10% 10%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--paper-strong);
+      padding: 10px;
+    }
+
+    .metric span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 16px;
+      border-collapse: collapse;
+      background: var(--paper-strong);
+      border: 1px solid var(--line);
+      font-variant-numeric: tabular-nums;
+    }
+
+    th,
+    td {
+      padding: 8px 9px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      color: var(--accent-dark);
+      font-size: 0.8rem;
+      background: rgba(11, 127, 104, 0.08);
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .instructions {
+      margin-top: 18px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+    }
+
+    .instruction-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 19px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    li {
+      margin: 4px 0;
+    }
+
+    .recommendation {
+      border-left: 4px solid var(--accent);
+      background: rgba(11, 127, 104, 0.08);
+      padding: 11px 12px;
+      color: var(--ink);
+    }
+
+    .recommendation p {
+      margin: 0 0 6px;
+      font-weight: 900;
+    }
+
+    .recommendation code {
+      display: block;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        width: min(100% - 18px, 720px);
+        padding-top: 18px;
+      }
+
+      header {
+        display: block;
+      }
+
+      .badge {
+        display: inline-block;
+        margin-top: 12px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-panel {
+        order: -1;
+      }
+
+      .chart-wrap {
+        aspect-ratio: 1.08;
+        min-height: 270px;
+      }
+
+      .summary,
+      .instruction-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: calc(100% - 12px);
+      }
+
+      .controls,
+      .chart-panel,
+      .instructions {
+        padding: 10px;
+      }
+
+      .presets,
+      .summary,
+      .instruction-grid {
+        grid-template-columns: 1fr;
+      }
+
+      th,
+      td {
+        padding: 7px 6px;
+        font-size: 0.86rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>THRHOV Expo Simulator</h1>
+        <p class="lead">Simuleaza curba de throttle pentru mixerul EdgeTX THRHOV: hover real, expo separat pe coborare si urcare, limitare prin Up Scale si Max throttle.</p>
+      </div>
+      <div class="badge">GitHub Pages single-file</div>
+    </header>
+
+    <section class="layout" aria-label="Simulator curba throttle">
+      <form class="panel controls">
+        <div class="presets" aria-label="Preseturi">
+          <button type="button" data-preset="fine">Preset fin</button>
+          <button type="button" data-preset="full">Preset 100%</button>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="hover">X / Hover</label>
+            <output id="hoverValue">25%</output>
+          </div>
+          <input id="hover" type="range" min="20" max="80" step="1" value="25">
+          <div class="limits"><span>20%</span><span>80%</span></div>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="expoDown">Expo Down</label>
+            <output id="expoDownValue">0.65</output>
+          </div>
+          <input id="expoDown" type="range" min="0" max="0.95" step="0.01" value="0.65">
+          <div class="limits"><span>0.00</span><span>0.95</span></div>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="expoUp">Expo Up</label>
+            <output id="expoUpValue">0.90</output>
+          </div>
+          <input id="expoUp" type="range" min="0" max="0.95" step="0.01" value="0.90">
+          <div class="limits"><span>0.00</span><span>0.95</span></div>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="upScale">Up Scale</label>
+            <output id="upScaleValue">0.60</output>
+          </div>
+          <input id="upScale" type="range" min="0" max="1" step="0.01" value="0.60">
+          <div class="limits"><span>0.00</span><span>1.00</span></div>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="maxThrottle">Max throttle</label>
+            <output id="maxThrottleValue">70%</output>
+          </div>
+          <input id="maxThrottle" type="range" min="30" max="100" step="1" value="70">
+          <div class="limits"><span>30%</span><span>100%</span></div>
+        </div>
+      </form>
+
+      <section class="panel chart-panel">
+        <div class="chart-wrap">
+          <canvas id="curveCanvas" aria-label="Grafic curba throttle"></canvas>
+        </div>
+
+        <div class="summary">
+          <div class="metric"><span>Hover/X</span><strong id="hoverMetric">25%</strong></div>
+          <div class="metric"><span>Max efectiv</span><strong id="maxMetric">70%</strong></div>
+          <div class="metric"><span>Output la 0%</span><strong id="centerMetric">25%</strong></div>
+          <div class="metric"><span>Raw la 0%</span><strong id="centerRawMetric">-512</strong></div>
+        </div>
+
+        <table aria-label="Valori throttle calculate">
+          <thead>
+            <tr>
+              <th>Stick %</th>
+              <th>Output %</th>
+              <th>Raw EdgeTX</th>
+            </tr>
+          </thead>
+          <tbody id="valueRows"></tbody>
+        </table>
+      </section>
+    </section>
+
+    <section class="panel instructions">
+      <h2>Instructiuni de folosire</h2>
+      <div class="instruction-grid">
+        <ul>
+          <li>X / Hover este throttle-ul la care drona sta aproximativ in hover.</li>
+          <li>Expo Down controleaza finetea sub hover, adica la coborare.</li>
+          <li>Expo Up controleaza finetea imediat peste hover.</li>
+          <li>Up Scale reduce cat de mult influenteaza partea de sus a curbei.</li>
+          <li>Max throttle limiteaza throttle-ul maxim peste hover.</li>
+          <li>Daca vrei control mai fin imediat peste hover, cresti Expo Up.</li>
+          <li>Daca nu vrei ca throttle-ul sa urce pana la 100%, reduci Max throttle.</li>
+          <li>Daca vrei si mai putina putere peste hover, reduci Up Scale.</li>
+          <li>Linia portocalie/orizontala reprezinta Hover/X.</li>
+          <li>Linia verde/orizontala reprezinta Max throttle.</li>
+          <li>Tabelul arata valori utile pentru verificare in EdgeTX.</li>
+        </ul>
+
+        <div class="recommendation">
+          <p>Recomandare initiala</p>
+          <code>X = valoarea reala de hover a dronei</code>
+          <code>Expo Down = 0.65</code>
+          <code>Expo Up = 0.90</code>
+          <code>Up Scale = 0.60</code>
+          <code>Max throttle = 0.70</code>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const EDGE_MIN = -1024;
+    const EDGE_MAX = 1024;
+    const EDGE_SPAN = 2048;
+    const STICK_VALUES = [-100, -75, -50, -25, 0, 25, 50, 75, 100];
+
+    const controls = {
+      hover: document.querySelector("#hover"),
+      expoDown: document.querySelector("#expoDown"),
+      expoUp: document.querySelector("#expoUp"),
+      upScale: document.querySelector("#upScale"),
+      maxThrottle: document.querySelector("#maxThrottle"),
+    };
+
+    const outputs = {
+      hover: document.querySelector("#hoverValue"),
+      expoDown: document.querySelector("#expoDownValue"),
+      expoUp: document.querySelector("#expoUpValue"),
+      upScale: document.querySelector("#upScaleValue"),
+      maxThrottle: document.querySelector("#maxThrottleValue"),
+      hoverMetric: document.querySelector("#hoverMetric"),
+      maxMetric: document.querySelector("#maxMetric"),
+      centerMetric: document.querySelector("#centerMetric"),
+      centerRawMetric: document.querySelector("#centerRawMetric"),
+      valueRows: document.querySelector("#valueRows"),
+    };
+
+    const canvas = document.querySelector("#curveCanvas");
+
+    const presets = {
+      fine: {
+        hover: 25,
+        expoDown: 0.65,
+        expoUp: 0.90,
+        upScale: 0.60,
+        maxThrottle: 70,
+      },
+      full: {
+        hover: 25,
+        expoDown: 0.65,
+        expoUp: 0.80,
+        upScale: 1.00,
+        maxThrottle: 100,
+      },
+    };
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function round(value) {
+      return Math.round(value);
+    }
+
+    function expoCurve(u, expo) {
+      return (1 - expo) * u + expo * u * u * u;
+    }
+
+    function readSettings() {
+      const hoverPct = Number(controls.hover.value);
+      const maxPctRequested = Number(controls.maxThrottle.value);
+
+      return {
+        hoverPct,
+        hover: hoverPct / 100,
+        expoDown: Number(controls.expoDown.value),
+        expoUp: Number(controls.expoUp.value),
+        upScale: Number(controls.upScale.value),
+        maxPctRequested,
+        maxPct: clamp(maxPctRequested / 100, hoverPct / 100, 1),
+      };
+    }
+
+    function calculatePoint(stickPercent, settings) {
+      const u = clamp(stickPercent / 100, -1, 1);
+      const hover = settings.hover;
+      const maxPct = settings.maxPct;
+      let shaped;
+      let pct;
+
+      if (u < 0) {
+        shaped = expoCurve(u, settings.expoDown);
+      } else {
+        const shapedUp = expoCurve(u, settings.expoUp);
+        shaped = shapedUp * settings.upScale;
+      }
+
+      if (shaped < 0) {
+        pct = hover * (shaped + 1);
+      } else {
+        pct = hover + (maxPct - hover) * shaped;
+      }
+
+      const outputPct = clamp(pct * 100, 0, 100);
+      const raw = clamp(round((outputPct / 100) * EDGE_SPAN + EDGE_MIN), EDGE_MIN, EDGE_MAX);
+
+      return { outputPct, raw };
+    }
+
+    function formatPercent(value) {
+      return `${value.toFixed(1)}%`;
+    }
+
+    function drawChart(settings) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const width = rect.width;
+      const height = rect.height;
+      const pad = width < 460 ? 30 : 44;
+      const plotW = width - pad * 2;
+      const plotH = height - pad * 2;
+      const xForStick = (stickPercent) => pad + ((stickPercent + 100) / 200) * plotW;
+      const yForOutput = (outputPct) => height - pad - (outputPct / 100) * plotH;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(24, 35, 31, 0.18)";
+
+      for (let i = 0; i <= 10; i += 1) {
+        const x = pad + (plotW * i) / 10;
+        const y = pad + (plotH * i) / 10;
+        ctx.beginPath();
+        ctx.moveTo(x, pad);
+        ctx.lineTo(x, height - pad);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(width - pad, y);
+        ctx.stroke();
+      }
+
+      const hoverY = yForOutput(settings.hover * 100);
+      const maxY = yForOutput(settings.maxPct * 100);
+      const centerX = xForStick(0);
+
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = "#d36f21";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad, hoverY);
+      ctx.lineTo(width - pad, hoverY);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#16865f";
+      ctx.beginPath();
+      ctx.moveTo(pad, maxY);
+      ctx.lineTo(width - pad, maxY);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(24, 35, 31, 0.42)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(centerX, pad);
+      ctx.lineTo(centerX, height - pad);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = "#064f43";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+
+      for (let stick = -100; stick <= 100; stick += 1) {
+        const point = calculatePoint(stick, settings);
+        const x = xForStick(stick);
+        const y = yForOutput(point.outputPct);
+        if (stick === -100) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+
+      ctx.stroke();
+
+      const centerPoint = calculatePoint(0, settings);
+      ctx.fillStyle = "#d36f21";
+      ctx.beginPath();
+      ctx.arc(centerX, yForOutput(centerPoint.outputPct), 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#18231f";
+      ctx.font = width < 460 ? "11px Trebuchet MS" : "13px Trebuchet MS";
+      ctx.fillText("-100%", pad - 12, height - 10);
+      ctx.fillText("+100%", width - pad - 28, height - 10);
+      ctx.fillText("0%", centerX - 8, height - 10);
+      ctx.fillText("100%", 6, pad + 4);
+      ctx.fillText("0%", 12, height - pad + 4);
+      ctx.fillText("Hover/X", pad + 6, hoverY - 7);
+      ctx.fillText("Max", pad + 6, maxY - 7);
+    }
+
+    function renderTable(settings) {
+      outputs.valueRows.innerHTML = STICK_VALUES.map((stick) => {
+        const point = calculatePoint(stick, settings);
+        return `
+          <tr>
+            <td>${stick}%</td>
+            <td>${formatPercent(point.outputPct)}</td>
+            <td>${point.raw}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function render() {
+      const settings = readSettings();
+      const center = calculatePoint(0, settings);
+
+      outputs.hover.value = `${settings.hoverPct}%`;
+      outputs.expoDown.value = settings.expoDown.toFixed(2);
+      outputs.expoUp.value = settings.expoUp.toFixed(2);
+      outputs.upScale.value = settings.upScale.toFixed(2);
+      outputs.maxThrottle.value = `${settings.maxPctRequested}%`;
+      outputs.hoverMetric.textContent = `${settings.hoverPct}%`;
+      outputs.maxMetric.textContent = `${Math.round(settings.maxPct * 100)}%`;
+      outputs.centerMetric.textContent = formatPercent(center.outputPct);
+      outputs.centerRawMetric.textContent = String(center.raw);
+
+      drawChart(settings);
+      renderTable(settings);
+    }
+
+    function applyPreset(name) {
+      const preset = presets[name];
+      controls.hover.value = preset.hover;
+      controls.expoDown.value = preset.expoDown;
+      controls.expoUp.value = preset.expoUp;
+      controls.upScale.value = preset.upScale;
+      controls.maxThrottle.value = preset.maxThrottle;
+      render();
+    }
+
+    Object.values(controls).forEach((control) => {
+      control.addEventListener("input", render);
+    });
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+
+    window.addEventListener("resize", render);
+    render();
+  </script>
+</body>
+</html>

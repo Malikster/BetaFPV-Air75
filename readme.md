@@ -1,12 +1,12 @@
 # BetaFPV Air75 EdgeTX Scripts
 
-Proiect EdgeTX pentru RadioMaster Pocket + BETAFPV Air75. Include un mixer de throttle hover cu hover-point reglabil din `S1` si o pagina dedicata pentru reglarea Expo in `GV1`.
+Proiect EdgeTX pentru RadioMaster Pocket + BETAFPV Air75. Include un mixer de throttle hover cu hover-point reglabil din `S1` si o pagina dedicata pentru reglarea setarilor de curba in `GV1`..`GV4`.
 
 ## Fisiere principale
 
-`SCRIPTS/MIXES/THRHOV.lua` este Mixes Script-ul principal. Primeste `Thr`, `S1` si `Arm`, aplica Expo din `GV1`, remapeaza throttle-ul in jurul hover-point-ului si returneaza `ThrOut`.
+`SCRIPTS/MIXES/THRHOV.lua` este Mixes Script-ul principal. Primeste `Thr`, `S1` si `Arm`, aplica `Expo Down`, `Expo Up`, `Up Scale` si `Max throttle` din Global Variables, remapeaza throttle-ul in jurul hover-point-ului si returneaza `ThrOut`.
 
-`SCRIPTS/TELEMETRY/THREXP.lua` este pagina de telemetrie pentru reglarea Expo. Tastele `+` si `-` ajusteaza valoarea intre `0.00` si `0.80`, in pasi de `0.01`, si o salveaza in `GV1` pentru flight mode-ul curent.
+`SCRIPTS/TELEMETRY/THREXP.lua` este pagina de telemetrie pentru reglarea curbei. `ENTER` schimba randul selectat, iar tastele `+` si `-` ajusteaza valorile in pasi de `0.01` si le salveaza in `GV1`..`GV4` pentru flight mode-ul curent.
 
 `SCRIPTS/MIXES/thrhov.md` explica instalarea, configurarea inputurilor si avertizarea despre evitarea dublarii Expo in Betaflight.
 
@@ -20,3 +20,9 @@ Proiect EdgeTX pentru RadioMaster Pocket + BETAFPV Air75. Include un mixer de th
 6. Pe pagina `THRHOV EXPO`, regleaza Expo cu `+` si `-`.
 
 Recomandare: lasa `Throttle Expo` in Betaflight la `0`, sau foarte mic, ca sa nu dublezi curba de throttle.
+
+## THRHOV Expo Simulator
+
+Pagina pentru simularea curbei throttle/expo este in [`docs/index.html`](docs/index.html).
+
+Poate fi publicata cu GitHub Pages din `Settings -> Pages -> Deploy from branch -> docs folder`.
